@@ -1,0 +1,92 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+name: "PPD" # PostScript Printer Description
+scope: source.ppd
+file_extensions:
+  - ppd
+  - gpd
+contexts:
+  # The prototype context is prepended to all contexts but those setting
+  # meta_include_prototype: false.
+  prototype:
+    - include: comments
+
+  # The main context is the initial starting point of our syntax.
+  # Include other contexts from here (or specify them directly).
+  main:
+    - include: strings
+    - include: numbers
+    - include: constants
+    - include: data
+    - include: punctuation
+
+  punctuation:
+    - match: '[\*:/()]'
+      scope: punctuation.definition.generic.ppd
+
+  # Strings begin and end with quotes, and use backslashes as an escape
+  # character.
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.ppd
+      push: inside_string
+  inside_string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double.ppd
+    - match: '\.'
+      scope: constant.character.escape.ppd
+    - match: '"'
+      scope: punctuation.definition.string.end.ppd
+      pop: true
+
+  # TODO: Fix partial integer-in-word highlighting (i.e. in `FROM RFC-1212;`)
+  numbers:
+    # INTEGER / floating point REALs
+    - match: '\b(-)?[0-9.]+\b'
+      scope: constant.numeric.ppd
+    # Resolution
+    - match: '\b[0-9]+x[0-9.]+(dpi|dpc)\b'
+      scope: constant.numeric.ppd
+    # Hexadecimal bit string
+    - match: '''[0-9A-F]+''[Hh]'
+      scope: constant.numeric.ppd
+    # Binary bit string
+    - match: '''[01]+''[Bb]'
+      scope: constant.numeric.ppd
+    # REAL w/ mantissa + exponent
+    - match: '\b([0-9]+(\.[0-9]+)?(E(-)?[1-9][0-9]+)?)\b'
+      scope: constant.numeric.ppd
+
+  # Language constants
+  constants:
+    - match: '\b(True|False)\b'
+      scope: constant.language.ppd
+
+  data:
+    - match: '^(?=\*)'
+      scope: punctuation.definition.generic.ppd
+      push: inside_data
+  inside_data:
+    - meta_include_prototype: false
+    - meta_scope: something
+    - include: constants
+    - match: '^\*[a-zA-Z0-9_\.\-]+\b'
+      scope: keyword.control.ppd
+    - match: '\b\*?[a-zA-Z0-9_\.\-]+\b'
+      scope: string.regexp constant.character.escape
+    - match: '[\*\./()\-_]'
+      scope: punctuation.definition.generic.ppd
+    - match: ':'
+      scope: punctuation.definition.generic.ppd
+      pop: true
+
+  # Comments begin with a '--' and finish at the end of the line.
+  comments:
+    - match: '\*%'
+      scope: punctuation.definition.comment.ppd
+      push:
+        # This is an anonymous context push for brevity.
+        - meta_scope: comment.line.double-slash.ppd
+        - match: $\n?
+          pop: true
